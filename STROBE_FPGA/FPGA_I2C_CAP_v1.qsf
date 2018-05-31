@@ -1,0 +1,302 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2012 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 32-bit
+# Version 12.0 Build 263 08/02/2012 Service Pack 2 SJ Web Edition
+# Date created = 14:18:09  January 16, 2013
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		FPGA_I2C_CAP_v1_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE22F17C6
+set_global_assignment -name TOP_LEVEL_ENTITY FPGA_I2C_CAP_v1
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0 SP2"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "14:18:09  JANUARY 16, 2013"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 6
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_location_assignment PIN_A14 -to FTDI_DATA[0]
+set_location_assignment PIN_C14 -to FTDI_DATA[1]
+set_location_assignment PIN_C15 -to FTDI_DATA[2]
+set_location_assignment PIN_D15 -to FTDI_DATA[3]
+set_location_assignment PIN_F15 -to FTDI_DATA[4]
+set_location_assignment PIN_F14 -to FTDI_DATA[5]
+set_location_assignment PIN_G15 -to FTDI_DATA[6]
+set_location_assignment PIN_G16 -to FTDI_DATA[7]
+set_location_assignment PIN_E15 -to FTDI_RXF
+set_location_assignment PIN_F16 -to FTDI_WR
+set_location_assignment PIN_R8 -to CLK
+set_location_assignment PIN_A15 -to DUMMY[0]
+set_location_assignment PIN_A13 -to DUMMY[1]
+set_location_assignment PIN_B13 -to DUMMY[2]
+set_location_assignment PIN_A11 -to DUMMY[3]
+set_location_assignment PIN_D1 -to DUMMY[4]
+set_location_assignment PIN_F3 -to DUMMY[5]
+set_location_assignment PIN_B1 -to DUMMY[6]
+set_location_assignment PIN_L3 -to DUMMY[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to DUMMY[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_DATA[0]
+set_location_assignment PIN_E16 -to FTDI_TXE
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to FTDI_TXE
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_WR
+set_location_assignment PIN_A2 -to SCL_0
+set_location_assignment PIN_A4 -to SCL_1
+set_location_assignment PIN_B6 -to SCL_2
+set_location_assignment PIN_A7 -to SCL_3
+set_location_assignment PIN_E7 -to SCL_4
+set_location_assignment PIN_F9 -to SCL_5
+set_location_assignment PIN_E11 -to SCL_6
+set_location_assignment PIN_A12 -to SCL_7
+set_location_assignment PIN_T14 -to SCL_8
+set_location_assignment PIN_R12 -to SCL_9
+set_location_assignment PIN_P11 -to SCL_10
+set_location_assignment PIN_N9 -to SCL_11
+set_location_assignment PIN_R16 -to SCL_12
+set_location_assignment PIN_R14 -to SCL_13
+set_location_assignment PIN_L14 -to SCL_14
+set_location_assignment PIN_J16 -to SCL_15
+set_location_assignment PIN_A3 -to SDA_0
+set_location_assignment PIN_B5 -to SDA_1
+set_location_assignment PIN_A6 -to SDA_2
+set_location_assignment PIN_C6 -to SDA_3
+set_location_assignment PIN_D8 -to SDA_4
+set_location_assignment PIN_E9 -to SDA_5
+set_location_assignment PIN_E10 -to SDA_6
+set_location_assignment PIN_D11 -to SDA_7
+set_location_assignment PIN_T13 -to SDA_8
+set_location_assignment PIN_T11 -to SDA_9
+set_location_assignment PIN_R10 -to SDA_10
+set_location_assignment PIN_N11 -to SDA_11
+set_location_assignment PIN_L15 -to SDA_12
+set_location_assignment PIN_N16 -to SDA_13
+set_location_assignment PIN_K15 -to SDA_15
+set_location_assignment PIN_N14 -to SDA_14
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_0
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_1
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_2
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_3
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_4
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_5
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_6
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_7
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_8
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_9
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_10
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_11
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_12
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_13
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_14
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SCL_15
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_0
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_1
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_2
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_3
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_4
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_5
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_6
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_7
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_8
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_9
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_10
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_11
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_12
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_13
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_14
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDA_15
+set_location_assignment PIN_D14 -to FTDI_RD
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to FTDI_RXF
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_RD
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_location_assignment PIN_D16 -to FTDI_RESET
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FTDI_RESET
+set_global_assignment -name VHDL_FILE lighting_control.vhd
+set_global_assignment -name VHDL_FILE i2c_master.vhd
+set_global_assignment -name VHDL_FILE USB_IF_SEND.vhd
+set_global_assignment -name VHDL_FILE I2C_USB_BRIDGE.vhd
+set_global_assignment -name VHDL_FILE FPGA_I2C_CAP_v1.vhd
+set_global_assignment -name VHDL_FILE I2C_BLOCK_MUX.vhd
+set_global_assignment -name VHDL_FILE I2C_CH_SCHED.vhd
+set_global_assignment -name VHDL_FILE USB_IF_RCV.vhd
+set_location_assignment PIN_B3 -to LED1_0
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_0
+set_location_assignment PIN_A5 -to LED1_1
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_1
+set_location_assignment PIN_B7 -to LED1_2
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_2
+set_location_assignment PIN_C8 -to LED1_3
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_3
+set_location_assignment PIN_E8 -to LED1_4
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_4
+set_location_assignment PIN_C9 -to LED1_5
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_5
+set_location_assignment PIN_C11 -to LED1_6
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_6
+set_location_assignment PIN_D12 -to LED1_7
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_7
+set_location_assignment PIN_R13 -to LED1_8
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_8
+set_location_assignment PIN_T10 -to LED1_9
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_9
+set_location_assignment PIN_N12 -to LED1_10
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_10
+set_location_assignment PIN_L16 -to LED1_11
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_11
+set_location_assignment PIN_P15 -to LED1_12
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_12
+set_location_assignment PIN_N15 -to LED1_13
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_13
+set_location_assignment PIN_M10 -to LED1_14
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_14
+set_location_assignment PIN_J13 -to LED1_15
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1_15
+set_location_assignment PIN_B4 -to LED2_0
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_0
+set_location_assignment PIN_D5 -to LED2_1
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_1
+set_location_assignment PIN_D6 -to LED2_2
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_2
+set_location_assignment PIN_E6 -to LED2_3
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_3
+set_location_assignment PIN_F8 -to LED2_4
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_4
+set_location_assignment PIN_D9 -to LED2_5
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_5
+set_location_assignment PIN_B11 -to LED2_6
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_6
+set_location_assignment PIN_B12 -to LED2_7
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_7
+set_location_assignment PIN_T12 -to LED2_8
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_8
+set_location_assignment PIN_R11 -to LED2_9
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_9
+set_location_assignment PIN_P9 -to LED2_10
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_10
+set_location_assignment PIN_K16 -to LED2_11
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_11
+set_location_assignment PIN_P16 -to LED2_12
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_12
+set_location_assignment PIN_P14 -to LED2_13
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_13
+set_location_assignment PIN_L13 -to LED2_14
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_14
+set_location_assignment PIN_J14 -to LED2_15
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED2_15
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_0 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_0 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_1 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_1 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_2 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_2 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_3 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_3 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_4 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_4 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_5 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_5 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_6 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_6 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_7 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_7 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_8 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_8 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_9 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_9 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_10 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_10 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_11 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_11 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_12 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_12 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_13 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_13 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_14 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_14 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SCL_15 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED1_15 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_0 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_0 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_1 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_1 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_2 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_2 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_3 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_3 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_4 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_4 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_5 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_5 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_6 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_6 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_7 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_7 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_8 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_8 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_9 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_9 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_10 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_10 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_11 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_11 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_12 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_12 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_13 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_13 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_14 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER SDA_15 -section_id I2C
+set_global_assignment -name ASSIGNMENT_GROUP_MEMBER LED2_15 -section_id I2C
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
