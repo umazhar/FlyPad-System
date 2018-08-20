@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Mon Dec  9 15:01:45 2013
+Quartus II 64-Bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition
+Revision Name : FPGA_I2C_CAP_v2
+Top-level Entity Name : FPGA_I2C_CAP_v1
+Family : Cyclone IV E
+Total logic elements : 21,277
+    Total combinational functions : 20,927
+    Dedicated logic registers : 12,469
+Total registers : 12469
+Total pins : 86
+Total virtual pins : 0
+Total memory bits : 0
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 0
