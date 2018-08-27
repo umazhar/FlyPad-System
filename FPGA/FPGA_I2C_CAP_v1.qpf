@@ -16,16 +16,15 @@
 #
 # -------------------------------------------------------------------------- #
 #
-# Quartus II 64-Bit
+# Quartus II 32-bit
 # Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
-# Date created = 13:16:49  December 09, 2013
+# Date created = 22:42:13  November 13, 2016
 #
 # -------------------------------------------------------------------------- #
 
 QUARTUS_VERSION = "13.0"
-DATE = "13:16:49  December 09, 2013"
+DATE = "22:42:13  November 13, 2016"
 
 # Revisions
 
-PROJECT_REVISION = "FPGA_I2C_CAP_v2"
 PROJECT_REVISION = "FPGA_I2C_CAP_v1"

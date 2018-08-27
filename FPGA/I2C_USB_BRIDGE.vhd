@@ -21,9 +21,9 @@ port
 		B_ADDR   	  	: OUT    STD_LOGIC_VECTOR(6 DOWNTO 0); 	-- I2C address of target slave
 		B_RW     	  	: OUT    STD_LOGIC;                    	-- I2C '0' is write, '1' is read
 		B_DATA_WR	  	: OUT    STD_LOGIC_VECTOR(7 DOWNTO 0); 	-- I2C data to write to slave
-		B_DATA   	  	: OUT		STD_LOGIC_VECTOR(159 DOWNTO 0)	-- Data to write on USB
+		B_DATA   	  	: OUT		STD_LOGIC_VECTOR(159 DOWNTO 0);	-- Data to write on USB
 																					
---		B_ACK_ERR 		: BUFFER STD_LOGIC                   		-- I2C flag if improper acknowledge from slave
+		B_ACK_ERR 		: BUFFER STD_LOGIC                   		-- I2C flag if improper acknowledge from slave
 
 --		B_DUMMY   	  : OUT		STD_LOGIC_VECTOR (7 DOWNTO 0)
 		

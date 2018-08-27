@@ -1,0 +1,16 @@
+Fitter Status : Successful - Thu Apr 06 17:46:56 2017
+Quartus II 32-bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition
+Revision Name : FPGA_I2C_CAP_v1
+Top-level Entity Name : FPGA_I2C_CAP_v1
+Family : Cyclone IV E
+Device : EP4CE22F17C6
+Timing Models : Final
+Total logic elements : 19,629 / 22,320 ( 88 % )
+    Total combinational functions : 18,144 / 22,320 ( 81 % )
+    Dedicated logic registers : 11,879 / 22,320 ( 53 % )
+Total registers : 11879
+Total pins : 86 / 154 ( 56 % )
+Total virtual pins : 0
+Total memory bits : 0 / 608,256 ( 0 % )
+Embedded Multiplier 9-bit elements : 0 / 132 ( 0 % )
+Total PLLs : 0 / 4 ( 0 % )
