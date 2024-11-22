@@ -41,11 +41,11 @@ def parse_numeric_query(query, NUMERIC_DEFAULT):
     return int_query
 
 def parse_YN_query(query):
-    if (query == "Y"):
-        print "Option set to Yes"
+    if (query == "Y" or query == "YES" or query == "y" or query == "yes"):
+        print("Option set to Yes")
         return True
-    elif (query == "N"):
-        print "Option set to No"
+    elif (query == "N" or query == "NO" or query == "n" or query == "no"):
+        print("Option set to No")
         return False
     else:
         print ("Could not parse answer, option defaulting to No")
@@ -64,8 +64,8 @@ def read_dataframe(filename, START_TIME, STOP_TIME):
     Takes a STROBE system datafile as input; parses into a 
     NUM_DATAFRAME_VALUES x n dataframe
     """
-    dataframe = [[0]*0 for i in range(NUM_DATAFRAME_VALUES)]
-    datafile = csv.reader(open('%s' % filename, 'rb'), delimiter="\n")
+    dataframe = [[0]*0 for i in range(NUM_DATAFRAME_VALUES)] #i believe this becomes a vector?
+    datafile = csv.reader(open('%s' % filename, 'r'), delimiter="\n")
     
     if STOP_TIME != None:
         assert START_TIME < STOP_TIME
@@ -81,7 +81,7 @@ def read_dataframe(filename, START_TIME, STOP_TIME):
                 split_datarow = datarow[0].split('\t')
                 for i in range(0, NUM_DATAFRAME_VALUES):
                     dataframe[i].append(split_datarow[i])
-    return dataframe
+    return dataframe # so i believe this is a matrix. And we access separate rows in the following function
 
 def read_arena_values(dataframe, arena_num):
     """
@@ -90,17 +90,21 @@ def read_arena_values(dataframe, arena_num):
     """
     offset = arena_num * NUM_DATAVALS_PER_ARENA
     CH1_values = dataframe[offset + CH1_INTERNAL_DATAVAL_INDEX]
+    # CH1_values_length = len(list(map(int, dataframe[offset + CH1_INTERNAL_DATAVAL_INDEX])))
     CH2_values = dataframe[offset + CH2_INTERNAL_DATAVAL_INDEX]
+    # CH2_values_length = len(list(map(int, dataframe[offset + CH2_INTERNAL_DATAVAL_INDEX])))
     LED1_values = dataframe[offset + LED1_INTERNAL_DATAVAL_INDEX]
+    # LED1_values_length = len(list(map(int, dataframe[offset + LED1_INTERNAL_DATAVAL_INDEX])))
     LED2_values = dataframe[offset + LED2_INTERNAL_DATAVAL_INDEX]
+    # LED2_values_length = len(list(map(int, dataframe[offset + LED2_INTERNAL_DATAVAL_INDEX])))
 
     # convert numbers from str representation to int
-    CH1_values = map(int, CH1_values)
-    CH2_values = map(int, CH2_values)
-    LED1_values = map(int, LED1_values)
-    LED2_values = map(int, LED2_values)
+    CH1_values = list(map(int, CH1_values))
+    CH2_values = list(map(int, CH2_values))
+    LED1_values = list(map(int, LED1_values))
+    LED2_values = list(map(int, LED2_values))
 
-    return(CH1_values,CH2_values,LED1_values,LED2_values)
+    return(CH1_values, CH2_values, LED1_values, LED2_values)
 
 def save_calculations(base, arena_num, LED1_array, LED2_array, dirpath):
     """
@@ -146,13 +150,13 @@ def filter_LED_values_by_duration(LED_values, MIN_DURATION):
             if (current_sip_duration < MIN_DURATION):
                 filtered_LED_values = replace_element(filtered_LED_values, 
                     LED_OFF, range(current_LED_value_index - current_sip_duration, 
-                    current_LED_value_index))
+                    current_LED_value_index)) # so here, we're overwriting it to say LED_OFF to show that we don't care about this segment and it's as if it was off that whole time
         current_LED_value_index += 1
         LED_value_prev = LED_value
 
     return filtered_LED_values
     
-def calculate_LED_values(CH_values):
+def calculate_LED_values(CH_values): # this function is never used it seems
     LED_values = []
     sliding_window = deque([NULL_VALUE]*NUM_HISTORIC_VALUES)
     for ch_value in CH_values:
@@ -199,6 +203,7 @@ def cumulative_bin_sips(LED_values, TIME_BIN):
 
 def bin_rising_edges(LED_values, TIME_BIN):
     splittable_index = int(len(LED_values)/TIME_BIN)
+    #print("length of list: " + str(LED_val_length))
     assert (splittable_index != 0), "Your time bin is greater than the length of your dataset!"
     binned_LED_values = np.split(np.array(LED_values[0:splittable_index * TIME_BIN]), splittable_index);
     rising_edges = []
@@ -239,3 +244,7 @@ def sip_duration(LED_values):
         current_LED_value_index += 1
         LED_value_prev = LED_value
     return sip_duration_array
+
+# sip duration and LED duration are very similar functions
+
+# only thing i don't understand is the bins
