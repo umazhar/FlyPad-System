@@ -2,9 +2,9 @@ import sys
 import threading
 import queue
 import time
-import datetime  # Import datetime module for timestamps
-import random  # Import random module for generating random data
-import os       # <-- ADDED: for handling directories
+import datetime
+import random
+import os
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QGridLayout, QPushButton,
@@ -17,21 +17,26 @@ from pyftdi.serialext import serial_for_url
 NUM_ARENAS = 16
 is_running = False  # Global flag for data collection status
 
+# Thresholds
+SIP_THRESHOLD = 21000          # Anything above this is considered a "sip"
+RIGHT_SENSOR_THRESHOLD = 25000 # Values above this are considered a "right sip"; else "left sip"
+
 # USB Vendor ID (VID) 0403h FTDI default VID (hex)
 # USB Product ID (PID) 6015h FTDI default PID (hex)
 device_url = 'ftdi://0x0403:0x6015:FTWCKS5Q/1'
 
 def read_ftdi_data(ftdi_serial):
+    """Read a single line from the FTDI device and parse it."""
     try:
         line = ftdi_serial.readline()
         if line:
-            data_values = parse_data_line(line)
-            return data_values
+            return parse_data_line(line)
     except Exception as e:
         print(f"Error reading from FTDI device: {e}")
     return None
 
 def parse_data_line(line):
+    """Convert a comma-separated string of floats into a list of floats."""
     line = line.decode('utf-8').strip()
     data_values = [float(value) for value in line.split(',')]
     return data_values  # Should be a list with values for all arenas
@@ -62,7 +67,7 @@ class DataAcquisitionThread(threading.Thread):
                     self.data_queue.put(data_values)
                 else:
                     time.sleep(0.01)
-    
+
     def stop(self):
         self.is_running = False
         if self.ftdi_serial:
@@ -80,7 +85,9 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
-        # Arena selection and show all toggle
+        # ------------------
+        # Top Layout: Arena Selector, Show All, Debug Mode
+        # ------------------
         top_layout = QHBoxLayout()
         main_layout.addLayout(top_layout)
 
@@ -89,52 +96,86 @@ class MainWindow(QMainWindow):
             self.arena_selector.addItem(f"Arena {i+1}")
         self.arena_selector.currentIndexChanged.connect(self.change_arena)
 
-        # Add Show All Arenas button
         self.show_all_button = QPushButton("Show All Arenas")
         self.show_all_button.setCheckable(True)
         self.show_all_button.toggled.connect(self.toggle_show_all_arenas)
         self.show_all_arenas = False  # Flag to track the toggle state
 
-        # Add Debug Mode button
         self.debug_button = QPushButton("Debug Mode")
         self.debug_button.setCheckable(True)
         self.debug_button.toggled.connect(self.toggle_debug_mode)
         self.debug_mode = False  # Flag to track debug mode
 
-        # Arena selector, Show All button, and Debug Mode button
         top_layout.addWidget(QLabel("Select Arena:"))
         top_layout.addWidget(self.arena_selector)
         top_layout.addWidget(self.show_all_button)
         top_layout.addWidget(self.debug_button)
 
-        # Stack to switch between single and multiple plots
+        # ------------------
+        # Plot Stacked Widget (Single vs All)
+        # ------------------
         self.plot_stack = QStackedWidget()
         main_layout.addWidget(self.plot_stack)
 
-        # Single plot widget
+        # Single plot widget container + labels
+        self.single_plot_container = QWidget()
+        single_plot_layout = QVBoxLayout(self.single_plot_container)
+
         self.single_plot_widget = pg.PlotWidget(title="Data Plot")
         self.single_plot_widget.setYRange(-50, 150)  # Adjust range as needed
-        self.plot_stack.addWidget(self.single_plot_widget)
+        single_plot_layout.addWidget(self.single_plot_widget)
 
-        # Multiple plots widget
+        # Container for "Sip Count" and "Preference" under single plot
+        self.single_sip_label = QLabel("Left: 0, Right: 0")
+        self.single_pref_label = QLabel("Preference: 0.00")
+        single_plot_layout.addWidget(self.single_sip_label)
+        single_plot_layout.addWidget(self.single_pref_label)
+
+        self.plot_stack.addWidget(self.single_plot_container)
+
+        # Multiple plots widget (grid layout of 16 arenas)
         self.all_plots_widget = QWidget()
         self.all_plots_layout = QGridLayout()
         self.all_plots_widget.setLayout(self.all_plots_layout)
         self.plot_stack.addWidget(self.all_plots_widget)
 
-        # Create plot widgets for all arenas
+        # Create a combined widget+labels for each arena
         self.all_plot_widgets = []
+        self.all_sip_labels = []
+        self.all_pref_labels = []
+
         for i in range(NUM_ARENAS):
+            # Container per arena
+            arena_container = QWidget()
+            arena_layout = QVBoxLayout(arena_container)
+
+            # Plot
             plot = pg.PlotWidget(title=f"Arena {i+1}")
             plot.setYRange(-50, 150)
-            self.all_plots_layout.addWidget(plot, i // 4, i % 4)
-            self.all_plot_widgets.append(plot)
+            arena_layout.addWidget(plot)
 
-        # Layout for control buttons
+            # Labels for sip counts and preference
+            sip_label = QLabel("Left: 0, Right: 0")
+            pref_label = QLabel("Preference: 0.00")
+
+            arena_layout.addWidget(sip_label)
+            arena_layout.addWidget(pref_label)
+
+            # Place this arena's container in the grid
+            self.all_plots_layout.addWidget(arena_container, i // 4, i % 4)
+
+            # Keep references for later updates
+            self.all_plot_widgets.append(plot)
+            self.all_sip_labels.append(sip_label)
+            self.all_pref_labels.append(pref_label)
+
+        # ------------------
+        # Bottom Layout: Buttons
+        # ------------------
         button_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
 
-        # First row of buttons: Start and Stop
+        # First row: Start and Stop
         start_stop_layout = QHBoxLayout()
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
@@ -142,13 +183,13 @@ class MainWindow(QMainWindow):
         start_stop_layout.addWidget(self.stop_button)
         button_layout.addLayout(start_stop_layout)
 
-        # Add a visual divider
+        # Divider
         divider = QFrame()
         divider.setFrameShape(QFrame.HLine)
         divider.setFrameShadow(QFrame.Sunken)
         button_layout.addWidget(divider)
 
-        # Second row of buttons: Reset Baseline and Reset View
+        # Second row: Reset Baseline and Reset View
         reset_buttons_layout = QHBoxLayout()
         self.reset_baseline_button = QPushButton("Reset Baseline")
         self.reset_view_button = QPushButton("Reset View")
@@ -156,22 +197,30 @@ class MainWindow(QMainWindow):
         reset_buttons_layout.addWidget(self.reset_view_button)
         button_layout.addLayout(reset_buttons_layout)
 
-        # Connect buttons to their respective methods
+        # Connect button signals
         self.start_button.clicked.connect(self.start_data_collection)
         self.stop_button.clicked.connect(self.stop_data_collection)
         self.reset_baseline_button.clicked.connect(self.reset_baseline)
         self.reset_view_button.clicked.connect(self.reset_view)
 
-        # Initialize data structures
-        self.data = [[] for _ in range(NUM_ARENAS)]  # Data lists for each arena
-        self.baseline_offsets = [0 for _ in range(NUM_ARENAS)]  # Calibration offsets
-        self.current_arena_index = 0  # Currently selected arena
+        # ------------------
+        # Data structures
+        # ------------------
+        # Historical data for plotting
+        self.data = [[] for _ in range(NUM_ARENAS)]  # raw data minus baseline offsets
+        self.baseline_offsets = [0 for _ in range(NUM_ARENAS)]  # calibration offsets
+        self.current_arena_index = 0  # which arena is selected in the single-plot view
 
-        # Initialize the data queue and data thread
+        # Variables for sip counting
+        self.left_counts = [0 for _ in range(NUM_ARENAS)]
+        self.right_counts = [0 for _ in range(NUM_ARENAS)]
+        # Track whether we were above threshold on the *previous* sample
+        # so we only count a sip once per crossing
+        self.was_above_threshold = [False for _ in range(NUM_ARENAS)]
+
+        # Data acquisition
         self.data_queue = queue.Queue()
         self.data_thread = None
-
-        # Initialize the data file attribute
         self.data_file = None
 
     def start_data_collection(self):
@@ -193,70 +242,114 @@ class MainWindow(QMainWindow):
         # Write header to the data file
         self.data_file.write("Timestamp," + ",".join([f"Arena{i+1}" for i in range(NUM_ARENAS)]) + "\n")
 
-        # Start the data acquisition thread with the debug mode flag
+        # Start the data acquisition thread
         self.data_thread = DataAcquisitionThread(self.data_queue, debug_mode=self.debug_mode)
         self.data_thread.start()
 
         # Start the timer to update the plot
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plots)
-        self.timer.start(100)  # Update every 100 milliseconds
+        self.timer.start(100)  # Update every 100 ms
 
     def stop_data_collection(self):
         global is_running
         is_running = False
         print("Data collection stopped.")
-        self.timer.stop()
+        if hasattr(self, 'timer') and self.timer.isActive():
+            self.timer.stop()
+
         if self.data_thread:
             self.data_thread.stop()
             self.data_thread.join()
             self.data_thread = None
 
-        # Close the data file
         if self.data_file:
             self.data_file.close()
             self.data_file = None
 
     def update_plots(self):
-        # Check if there's data in the queue
+        # Process all available data in the queue
         while not self.data_queue.empty():
             data_values = self.data_queue.get()
-            # data_values should be a list with values for each arena
             timestamp = datetime.datetime.now().isoformat()
-            # Write data to file
+
+            # Write to file
             if self.data_file:
                 self.data_file.write(f"{timestamp}," + ",".join(map(str, data_values)) + "\n")
 
+            # Process each arena's reading
             for i in range(NUM_ARENAS):
-                new_value = data_values[i]  # Get the value for arena i
+                new_value = data_values[i]
 
-                # Apply calibration offset
+                # Apply baseline offset
                 calibrated_value = new_value - self.baseline_offsets[i]
-
                 self.data[i].append(calibrated_value)
-                if len(self.data[i]) > 100:  # Limit the history to 100 data points
+                if len(self.data[i]) > 100:  # limit the history
                     self.data[i].pop(0)
 
+                # Check sip threshold crossing
+                above_threshold = (new_value > SIP_THRESHOLD)
+                if above_threshold and not self.was_above_threshold[i]:
+                    # This is a new sip event
+                    if new_value > RIGHT_SENSOR_THRESHOLD:
+                        # Right sip
+                        self.right_counts[i] += 1
+                    else:
+                        # Left sip
+                        self.left_counts[i] += 1
+
+                    self.was_above_threshold[i] = True
+                elif not above_threshold:
+                    self.was_above_threshold[i] = False
+
+        # Update plots and labels
         if self.show_all_arenas:
             # Update all plots
             for i in range(NUM_ARENAS):
                 self.all_plot_widgets[i].plot(self.data[i], clear=True)
+                self.update_arena_labels(i)
         else:
-            # Update the plot for the currently selected arena
-            self.single_plot_widget.plot(self.data[self.current_arena_index], clear=True)
+            # Update only the currently selected arena plot
+            idx = self.current_arena_index
+            self.single_plot_widget.plot(self.data[idx], clear=True)
+            self.update_arena_labels(idx, single_view=True)
+
+    def update_arena_labels(self, arena_index, single_view=False):
+        """Update the sip count and preference index labels for a given arena."""
+        left = self.left_counts[arena_index]
+        right = self.right_counts[arena_index]
+        total = left + right
+
+        if total > 0:
+            pref_index = (left - right) / total  # (Left - Right) / (Left + Right)
+        else:
+            pref_index = 0
+
+        # Format label text
+        sip_text = f"Left: {left}, Right: {right}"
+        pref_text = f"Preference: {pref_index:.2f}"
+
+        # If we are updating the multi-arena grid
+        if not single_view:
+            self.all_sip_labels[arena_index].setText(sip_text)
+            self.all_pref_labels[arena_index].setText(pref_text)
+        else:
+            # Update the single-arena labels
+            self.single_sip_label.setText(sip_text)
+            self.single_pref_label.setText(pref_text)
 
     def change_arena(self, index):
-        # Update the current arena index when a new arena is selected
         self.current_arena_index = index
         print(f"Arena changed to: Arena {index + 1}")
 
         if not self.show_all_arenas:
-            # Clear and update the plot with data from the new arena
+            # Update the single plot with the new arena’s data
             self.single_plot_widget.plot(self.data[self.current_arena_index], clear=True)
             self.reset_view()
+            self.update_arena_labels(self.current_arena_index, single_view=True)
 
     def reset_baseline(self):
-        # Capture the current value as the new baseline
+        """Capture the current value as the new baseline for the selected or all arenas."""
         if self.show_all_arenas:
             # Reset baseline for all arenas
             for i in range(NUM_ARENAS):
@@ -277,7 +370,7 @@ class MainWindow(QMainWindow):
             print(f"Baseline reset for Arena {current_arena + 1} to {current_value}")
 
     def reset_view(self):
-        # Reset the plot view to the default settings
+        """Reset the plot view to the default settings (auto-range)."""
         if self.show_all_arenas:
             for plot in self.all_plot_widgets:
                 plot.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
@@ -286,27 +379,27 @@ class MainWindow(QMainWindow):
         else:
             self.single_plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
             self.single_plot_widget.autoRange()
-            print("Plot view reset to default.")
+            print("Single arena plot view reset to default.")
 
     def toggle_show_all_arenas(self, checked):
         self.show_all_arenas = checked
         if self.show_all_arenas:
             print("Showing all arenas.")
             self.plot_stack.setCurrentWidget(self.all_plots_widget)
-            self.arena_selector.setEnabled(False)  # Disable arena selector when showing all
+            self.arena_selector.setEnabled(False)  # Disable selector in multi-mode
         else:
             print("Showing selected arena.")
-            self.plot_stack.setCurrentWidget(self.single_plot_widget)
-            self.arena_selector.setEnabled(True)  # Enable arena selector
-            # Update the plot for the selected arena
-            self.single_plot_widget.plot(self.data[self.current_arena_index], clear=True)
+            self.plot_stack.setCurrentWidget(self.single_plot_container)
+            self.arena_selector.setEnabled(True)
+            # Update the single plot for the currently selected arena
+            idx = self.current_arena_index
+            self.single_plot_widget.plot(self.data[idx], clear=True)
+            self.update_arena_labels(idx, single_view=True)
 
     def toggle_debug_mode(self, checked):
         self.debug_mode = checked
-        if self.debug_mode:
-            print("Debug mode activated.")
-        else:
-            print("Debug mode deactivated.")
+        print("Debug mode activated." if self.debug_mode else "Debug mode deactivated.")
+        # If data collection is already running, restart to apply the debug mode change
         if is_running:
             self.stop_data_collection()
             self.start_data_collection()
