@@ -4,6 +4,7 @@ import queue
 import time
 import datetime  # Import datetime module for timestamps
 import random  # Import random module for generating random data
+import os       # <-- ADDED: for handling directories
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QGridLayout, QPushButton,
@@ -178,10 +179,17 @@ class MainWindow(QMainWindow):
         is_running = True
         print("Data collection started.")
 
-        # Generate a filename with timestamp
+        # Create logs directory if it doesn't exist
+        logs_dir = "logs"
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
+
+        # Generate a filename with timestamp and place it in the logs folder
         filename = datetime.datetime.now().strftime("data_%Y%m%d_%H%M%S.txt")
+        file_path = os.path.join(logs_dir, filename)
+
         # Open the data file for writing
-        self.data_file = open(filename, "w")
+        self.data_file = open(file_path, "w")
         # Write header to the data file
         self.data_file.write("Timestamp," + ",".join([f"Arena{i+1}" for i in range(NUM_ARENAS)]) + "\n")
 
