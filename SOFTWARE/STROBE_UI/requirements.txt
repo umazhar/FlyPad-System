@@ -1,4 +1,4 @@
+numpy
 pyqt5
 pyqtgraph
-pyftdi
-_tkinter
+pyserial
