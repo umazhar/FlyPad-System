@@ -12,12 +12,9 @@ import serial.tools.list_ports
 
 from constants import *
 
-class FTDIConnection:
-    """Handles FTDI device connection"""
-    
+class FTDIConnection:    
     @staticmethod
     def scan_ports():
-        """Find available FTDI devices"""
         available_ports = list(serial.tools.list_ports.comports())
         
         ftdi_ports = []
@@ -38,7 +35,6 @@ class FTDIConnection:
     
     @staticmethod
     def setup_device(port_name):
-        """Connect to device"""
         try:
             if " - " in port_name:
                 port_name = port_name.split(" - ")[0].strip()
@@ -64,9 +60,7 @@ class FTDIConnection:
             print(f"FTDI Error: {str(e)}")
             return False, None
 
-class DataReaderThread(threading.Thread):
-    """Base class for readers"""
-    
+class DataReaderThread(threading.Thread):    
     def __init__(self, data_queue):
         super().__init__()
         self.data_queue = data_queue
@@ -76,15 +70,15 @@ class DataReaderThread(threading.Thread):
     def stop(self):
         self.is_running = False
 
-class FTDIDataReader(DataReaderThread):
-    """Reads from actual hardware"""
-    
+class FTDIDataReader(DataReaderThread):    
     def __init__(self, data_queue, serial_port):
         super().__init__(data_queue)
         self.serial_port = serial_port
+        self.port_name = serial_port.port
+        self.error_count = 0
+        self.max_errors = 5  # Maximum consecutive errors before trying to reconnect
     
     def run(self):
-        """Read data from device"""
         try:
             # Start command
             START_COMMAND = b"G"
@@ -98,14 +92,19 @@ class FTDIDataReader(DataReaderThread):
                     
                     if len(packet) != FULL_PACKET_SIZE:
                         print(f"Bad packet: {len(packet)} bytes")
+                        self.error_count += 1
+                        if self.error_count >= self.max_errors:
+                            self._attempt_reconnect()
                         continue
+                    self.error_count = 0
                     
                     arena_values_left = []
                     arena_values_right = []
                     
                     for i in range(0, BYTES_PER_ARENA * NUM_ARENAS, BYTES_PER_ARENA):
                         arena_index = i // BYTES_PER_ARENA
-                        
+                        # CAPDAC Black magic
+                        # From old C++ code, i have no idea how this works tbh but it works so not going to touch it :D
                         if packet[i + 18] != INVALID_DEVICE_DATA:
                             capdac1 = int(((packet[i + 1] << 8) | packet[i + 2]) >> 4)
                             capdac2 = int(((packet[i + 3] << 8) | packet[i + 4]) >> 4)
@@ -120,12 +119,20 @@ class FTDIDataReader(DataReaderThread):
                     
                 except Exception as e:
                     print(f"Serial error: {e}")
-                    time.sleep(0.1)
+                    self.error_count += 1
+                    # If too many errors, try to reconnect
+                    if self.error_count >= self.max_errors:
+                        self._attempt_reconnect()
+                    
+                    time.sleep(0.5)  # Longer delay when error occurs
             
             # Send stop
-            STOP_COMMAND = b"S"
-            self.serial_port.write(STOP_COMMAND)
-            self.serial_port.flush()
+            try:
+                STOP_COMMAND = b"S"
+                self.serial_port.write(STOP_COMMAND)
+                self.serial_port.flush()
+            except:
+                pass  # Ignore errors when stopping
             
         except Exception as e:
             print(f"Thread error: {e}")
@@ -135,12 +142,42 @@ class FTDIDataReader(DataReaderThread):
                     self.serial_port.close()
                 except:
                     pass
+    
+    def _attempt_reconnect(self):
+        print(f"Connection issues detected. Attempting to reconnect to {self.port_name}...")
+        
+        # First, close the current connection
+        try:
+            self.serial_port.close()
+        except:
+            pass
+        
+        # Try to reconnect
+        try:
+            time.sleep(2)  # Wait before reconnecting
+            success, new_port = FTDIConnection.setup_device(self.port_name)
+            
+            if success:
+                self.serial_port = new_port
+                print(f"Successfully reconnected to {self.port_name}")
+                
+                # Re-send the start command
+                START_COMMAND = b"G"
+                self.serial_port.write(START_COMMAND)
+                self.serial_port.flush()
+                
+                # Reset error counter
+                self.error_count = 0
+            else:
+                print(f"Failed to reconnect to {self.port_name}")
+                self.error_count = self.max_errors - 2  # Try again soon but not immediately
+        except Exception as e:
+            print(f"Reconnection error: {e}")
+            self.error_count = self.max_errors - 2  # Try again soon
 
 class SimulatedDataReader(DataReaderThread):
-    """Generates fake data for testing"""
     
     def run(self):
-        """Generate simulated data"""
         try:
             while self.is_running:
                 left_values = []

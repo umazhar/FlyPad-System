@@ -8,30 +8,22 @@ import os
 import datetime
 from constants import NUM_ARENAS
 
-class DataLogger:
-    """Handles saving data to files"""
-    
+class DataLogger:    
     def __init__(self):
         self.sip_data_file = None
     
     def setup_files(self, custom_path=None):
-        """Create log files"""
-        # Make dirs if needed
         logs_dir = "logs"
         if not os.path.exists(logs_dir):
             os.makedirs(logs_dir)
-        
-        # Generate filenames with timestamp
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Sip data file - use custom path if provided
         if custom_path:
             sip_file_path = custom_path
         else:
             sip_filename = f"sip_data_{timestamp}.csv"
             sip_file_path = os.path.join(logs_dir, sip_filename)
-        
-        # Make CSV header
+
+        # CSV
         header = ["Timestamp"]
         for i in range(NUM_ARENAS):
             header.append(f"Arena{i+1}_Left")
@@ -48,15 +40,13 @@ class DataLogger:
         return logs_dir
     
     def log_sip_data(self, left_values, right_values, left_counts, right_counts):
-        """Save processed sip data"""
         if not self.sip_data_file:
             return
             
         try:
             timestamp = datetime.datetime.now().isoformat()
             row = [timestamp]
-            
-            # Add raw sensor values
+
             for i in range(min(NUM_ARENAS, len(left_values))):
                 row.append(str(left_values[i]))
             
@@ -80,7 +70,6 @@ class DataLogger:
             print(f"Sip data error: {e}")
     
     def close_files(self):
-        """Clean up files"""
         if self.sip_data_file:
             self.sip_data_file.close()
             self.sip_data_file = None

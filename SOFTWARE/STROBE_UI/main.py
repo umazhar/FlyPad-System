@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
-STROBE
+STROBE MAIN
 """
 
 import sys
@@ -13,10 +12,7 @@ from PyQt5.QtCore import Qt
 from viewer_ui import StrobeDataViewer
 
 def setup_dark_theme(app):
-    """Set dark theme for app"""
     app.setStyle('Fusion')
-    
-    # Dark palette
     dark_palette = QPalette()
     dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
     dark_palette.setColor(QPalette.WindowText, Qt.white)

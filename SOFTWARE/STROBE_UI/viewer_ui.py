@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-STROBE - Main UI components
-"""
 
 import queue
+import time
 import numpy as np
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QPushButton,
     QHBoxLayout, QLabel, QComboBox, QFileDialog, QGridLayout, QMessageBox,
-    QFrame, QStackedWidget
+    QFrame, QStackedWidget, QLineEdit
 )
 from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtGui import QIntValidator
 import pyqtgraph as pg
 
 from constants import *
@@ -25,55 +22,41 @@ class StrobeDataViewer(QMainWindow):
         super().__init__()
         self.setWindowTitle("STROBE: Sip-TRiggered Optogenetic Behavior Enclosure")
         self.setGeometry(100, 100, 1280, 800)
-        
-        # Core data handling
         self.data_queue = queue.Queue()
         self.data_processor = DataProcessor()
         self.data_logger = DataLogger()
-        
-        # State tracking
         self.is_running = False
         self.serial_port = None
         self.data_thread = None
         self.debug_mode = False
         self.current_arena_index = 0
         
-        # Default to multi-arena view
         self.show_all_arenas = True
-        
-        # Build UI
         self.init_ui()
         
-        # Set initial state
+        # initial states
         self.show_all_button.setChecked(True)
         self.plot_stack.setCurrentWidget(self.all_plots_widget)
         self.arena_selector.setEnabled(False)
-        
         self.scan_serial_ports()
     
     def init_ui(self):
-        """Build the UI"""
-        # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # Main layout
         main_layout = QVBoxLayout(central_widget)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(8)
         
-        # Top controls
         top_layout = QHBoxLayout()
         main_layout.addLayout(top_layout)
         
-        # Port selector
         port_label = QLabel("FTDI Port:")
         top_layout.addWidget(port_label)
-        
         self.port_combo = QComboBox()
         self.port_combo.setStyleSheet("QComboBox { color: white; } QComboBox QAbstractItemView { color: white; }")
         top_layout.addWidget(self.port_combo)
-        
+
         self.scan_button = QPushButton("Scan Ports")
         self.scan_button.clicked.connect(self.scan_serial_ports)
         top_layout.addWidget(self.scan_button)
@@ -106,6 +89,18 @@ class StrobeDataViewer(QMainWindow):
         self.debug_button.toggled.connect(self.toggle_debug_mode)
         top_layout.addWidget(self.debug_button)
         
+        # Arena count selector
+        top_layout.addWidget(QLabel("Number of Arenas:"))
+        self.arena_count_input = QLineEdit()
+        self.arena_count_input.setMaximumWidth(40)
+        self.arena_count_input.setText(str(NUM_ARENAS))
+        self.arena_count_input.setValidator(QIntValidator(1, NUM_ARENAS))
+        top_layout.addWidget(self.arena_count_input)
+        
+        self.update_arena_count_button = QPushButton("Update")
+        self.update_arena_count_button.clicked.connect(self.update_arena_count)
+        top_layout.addWidget(self.update_arena_count_button)
+        
         top_layout.addStretch(1)
         
         # Plot area (stack for single/multi view)
@@ -125,20 +120,21 @@ class StrobeDataViewer(QMainWindow):
         
         self.start_button = QPushButton("Start")
         self.stop_button = QPushButton("Stop")
-        self.reset_baseline_button = QPushButton("Reset Baseline")
+        self.restart_button = QPushButton("Restart Test")  # New button
         self.reset_view_button = QPushButton("Reset View")
         
         # Connect button actions
         self.start_button.clicked.connect(self.start_data_collection)
         self.stop_button.clicked.connect(self.stop_data_collection)
-        self.reset_baseline_button.clicked.connect(self.reset_baseline)
+        self.restart_button.clicked.connect(self.restart_test)  # Connect new button
         self.reset_view_button.clicked.connect(self.reset_view)
         
         self.stop_button.setEnabled(False)
+        self.restart_button.setEnabled(True)  # Initially enabled
         
         bottom_layout.addWidget(self.start_button)
         bottom_layout.addWidget(self.stop_button)
-        bottom_layout.addWidget(self.reset_baseline_button)
+        bottom_layout.addWidget(self.restart_button)  # Add new button
         bottom_layout.addWidget(self.reset_view_button)
         bottom_layout.addStretch(1)
         
@@ -147,7 +143,6 @@ class StrobeDataViewer(QMainWindow):
         main_layout.addWidget(self.status_label)
     
     def setup_single_arena_view(self):
-        """Create the single arena view"""
         self.single_plot_container = QWidget()
         single_plot_layout = QVBoxLayout(self.single_plot_container)
         single_plot_layout.setContentsMargins(5, 5, 5, 5)
@@ -157,23 +152,9 @@ class StrobeDataViewer(QMainWindow):
         self.single_plot_widget.setYRange(0, MAX_CAPDAC_VALUE)
         single_plot_layout.addWidget(self.single_plot_widget)
         
-        # Threshold lines
-        self.single_left_line = pg.InfiniteLine(
-            pos=LEFT_SIP_THRESHOLD, angle=0,
-            pen=pg.mkPen(color='#FFFF00', style=Qt.DashLine, width=3),  # Yellow, thicker
-            movable=False
-        )
-        self.single_right_line = pg.InfiniteLine(
-            pos=RIGHT_SIP_THRESHOLD, angle=0,
-            pen=pg.mkPen(color='#00FF00', style=Qt.DashLine, width=3),  # Green, thicker
-            movable=False
-        )
-        self.single_plot_widget.addItem(self.single_left_line)
-        self.single_plot_widget.addItem(self.single_right_line)
-        
-        # Plot curves
+        # Plot curves - change blue to light blue
         self.single_data_item_left = pg.PlotDataItem([], pen=pg.mkPen(color='r', width=2), name="Left Sensor")
-        self.single_data_item_right = pg.PlotDataItem([], pen=pg.mkPen(color='b', width=2), name="Right Sensor")
+        self.single_data_item_right = pg.PlotDataItem([], pen=pg.mkPen(color='#39C5BB', width=2), name="Right Sensor")  # Light blue color
         self.single_plot_widget.addItem(self.single_data_item_left)
         self.single_plot_widget.addItem(self.single_data_item_right)
         
@@ -209,12 +190,10 @@ class StrobeDataViewer(QMainWindow):
         self.single_labels_layout.addWidget(line3)
         self.single_labels_layout.addWidget(self.single_pref_label)
         self.single_labels_layout.addStretch(1)
-        
         single_plot_layout.addLayout(self.single_labels_layout)
         self.plot_stack.addWidget(self.single_plot_container)
     
     def setup_multi_arena_view(self):
-        """Create the multi-arena view"""
         self.all_plots_widget = QWidget()
         self.all_plots_layout = QGridLayout()
         self.all_plots_layout.setSpacing(10)
@@ -231,8 +210,16 @@ class StrobeDataViewer(QMainWindow):
         self.all_sip_total_labels = []
         self.all_pref_labels = []
         
+        # Store arena containers for recreating grid
+        self.arena_containers = []
+        
+        # Initialize with all arenas visible
+        self.visible_arena_count = NUM_ARENAS
+        
         for i in range(NUM_ARENAS):
             arena_container = QWidget()
+            self.arena_containers.append(arena_container)
+            
             arena_layout = QVBoxLayout(arena_container)
             arena_layout.setContentsMargins(5, 5, 5, 5)
             arena_layout.setSpacing(5)
@@ -241,23 +228,9 @@ class StrobeDataViewer(QMainWindow):
             plot.setYRange(0, MAX_CAPDAC_VALUE)
             arena_layout.addWidget(plot)
             
-            # Threshold lines
-            left_line = pg.InfiniteLine(
-                pos=LEFT_SIP_THRESHOLD, angle=0,
-                pen=pg.mkPen(color='#FFFF00', style=Qt.DashLine, width=3),  # Yellow, thicker
-                movable=False
-            )
-            right_line = pg.InfiniteLine(
-                pos=RIGHT_SIP_THRESHOLD, angle=0,
-                pen=pg.mkPen(color='#00FF00', style=Qt.DashLine, width=3),  # Green, thicker
-                movable=False
-            )
-            plot.addItem(left_line)
-            plot.addItem(right_line)
-            
-            # Add curves
-            left_curve = pg.PlotDataItem([], pen=pg.mkPen(color='r', width=2), name="Left Sensor")
-            right_curve = pg.PlotDataItem([], pen=pg.mkPen(color='b', width=2), name="Right Sensor")
+
+            left_curve = pg.PlotDataItem([], pen=pg.mkPen(color='r', width=2), name="Left Sensor") #red
+            right_curve = pg.PlotDataItem([], pen=pg.mkPen(color='#39C5BB', width=2), name="Right Sensor")  # Light blue color
             plot.addItem(left_curve)
             plot.addItem(right_curve)
             
@@ -272,7 +245,7 @@ class StrobeDataViewer(QMainWindow):
             lineA = QFrame()
             lineA.setFrameShape(QFrame.VLine)
             lineA.setFrameShadow(QFrame.Sunken)
-            
+    
             sip_right_label = QLabel("Right: 0")
             lineB = QFrame()
             lineB.setFrameShape(QFrame.VLine)
@@ -296,7 +269,7 @@ class StrobeDataViewer(QMainWindow):
             
             arena_layout.addLayout(label_row)
             
-            # Add to grid
+            # Add to grid initially
             row = i // 4
             col = i % 4
             self.all_plots_layout.addWidget(arena_container, row, col)
@@ -312,11 +285,8 @@ class StrobeDataViewer(QMainWindow):
             self.all_pref_labels.append(pref_label)
     
     def scan_serial_ports(self):
-        """Find FTDI devices"""
         self.port_combo.clear()
-        
         ftdi_ports, all_ports = FTDIConnection.scan_ports()
-        
         if ftdi_ports:
             for port in ftdi_ports:
                 self.port_combo.addItem(port["display"], port["device"])
@@ -331,17 +301,42 @@ class StrobeDataViewer(QMainWindow):
                 self.status_label.setText("No serial ports found.")
     
     def save_to_file(self):
-        """Set custom save location"""
         file_name, _ = QFileDialog.getSaveFileName(
             self, "Save Data", "", "CSV Files (*.csv);;All Files (*)"
         )
-        
         if file_name:
             self.custom_save_path = file_name
             self.status_label.setText(f"Will save to {file_name}")
     
+    def update_arena_count(self):
+        try:
+            count = int(self.arena_count_input.text())
+            if count < 1:
+                count = 1
+            elif count > NUM_ARENAS:
+                count = NUM_ARENAS
+
+            self.visible_arena_count = count
+            self.recreate_arena_grid()
+            self.status_label.setText(f"Showing {count} arenas")
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter a valid number between 1 and 16.")
+    
+    def recreate_arena_grid(self):
+        # Clear existing widgets from grid
+        for i in reversed(range(self.all_plots_layout.count())): 
+            self.all_plots_layout.itemAt(i).widget().setParent(None)
+        for i in range(min(self.visible_arena_count, NUM_ARENAS)):
+            arena_container = self.arena_containers[i]
+            
+            # Calculate position in grid (4 columns)
+            row = i // 4
+            col = i % 4
+            
+            # Add to grid
+            self.all_plots_layout.addWidget(arena_container, row, col)
+    
     def start_data_collection(self):
-        """Start collecting data"""
         # Check port
         port_name = self.port_combo.currentText()
         if not port_name or "No ports found" in port_name:
@@ -362,8 +357,6 @@ class StrobeDataViewer(QMainWindow):
             
             # Reset processor
             self.data_processor.reset()
-            
-            # Start the thread
             self.is_running = True
             
             if self.debug_mode:
@@ -378,12 +371,21 @@ class StrobeDataViewer(QMainWindow):
             self.timer.timeout.connect(self.update_plots)
             self.timer.start(50)
             
+            # Error checking timer - check every 2 seconds if we're still getting data
+            self.error_check_timer = QTimer()
+            self.error_check_timer.timeout.connect(self.check_connection_health)
+            self.error_check_timer.start(2000)
+            
+            # Record when we started
+            self.last_data_time = time.time()
+            
             # Disable controls
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
             self.port_combo.setEnabled(False)
             self.scan_button.setEnabled(False)
             self.save_location_button.setEnabled(False)
+            # Don't disable restart button - we want it available during collection
             
             if self.debug_mode:
                 self.status_label.setText("Using SIMULATED data (for testing)")
@@ -393,16 +395,63 @@ class StrobeDataViewer(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error: {str(e)}")
     
+    def check_connection_health(self):
+        if not self.is_running or self.debug_mode:
+            return
+            
+        # Check if weve received data recently (more than 5 seconds)
+        if hasattr(self, 'last_data_time') and time.time() - self.last_data_time > 5:
+            # Update status to show warning
+            self.status_label.setText("Warning: No data received in the last 5 seconds. Check connection.")
+    
+    def restart_test(self):
+        # Show warning dialog first
+        reply = QMessageBox.question(
+            self,
+            "Restart Test",
+            "Are you sure you want to restart the test?\nThis will delete all current session data and start a new log file.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        # If user clicked No, just return
+        if reply == QMessageBox.No:
+            return
+        
+        # Check if we're currently running
+        was_running = self.is_running
+        
+        # Stop current data collection if running
+        if was_running:
+            self.stop_data_collection()
+        
+        self.data_processor.reset()
+        self.data_logger.close_files()
+        
+        custom_path = getattr(self, 'custom_save_path', None)
+        logs_dir = self.data_logger.setup_files(custom_path)
+        
+        # Reset UI to view refreshed stte
+        self.reset_view()
+        
+        # Update status
+        if custom_path:
+            self.status_label.setText(f"Test restarted. Saving to custom location: {custom_path}")
+        else:
+            self.status_label.setText(f"Test restarted. Saving to {logs_dir}")
+            
+        if was_running:
+            self.start_data_collection()
+            
     def update_plots(self):
-        """Update plots with new data"""
+        got_data = False
+        
         while not self.data_queue.empty():
             values = self.data_queue.get()
-            
-            # Handle data format
+            got_data = True
             if isinstance(values, tuple) and len(values) == 2:
                 left_values, right_values = values
             else:
-                # Legacy format
                 left_values = values
                 right_values = [0] * len(values)
             
@@ -417,14 +466,24 @@ class StrobeDataViewer(QMainWindow):
                 self.data_processor.right_counts
             )
         
+        # Update last data time if we got data
+        if got_data:
+            self.last_data_time = time.time()
+            # Clear any warning in status
+            if "Warning: No data received" in self.status_label.text():
+                if self.debug_mode:
+                    self.status_label.setText("Using SIMULATED data (for testing)")
+                else:
+                    port_name = self.port_combo.currentText()
+                    self.status_label.setText(f"Connected to {port_name}")
+        
         # Update plots if there's data
         if self.data_processor.has_data():
             self.update_plot_display()
     
     def update_plot_display(self):
-        """Update the visible plots"""
         if self.show_all_arenas:
-            for i in range(NUM_ARENAS):
+            for i in range(min(self.visible_arena_count, NUM_ARENAS)):
                 # Update left sensor
                 if self.data_processor.data_left[i]:
                     self.all_data_items_left[i].setData(self.data_processor.data_left[i])
@@ -446,7 +505,6 @@ class StrobeDataViewer(QMainWindow):
             self.update_arena_labels(idx, single_view=True)
     
     def update_arena_labels(self, arena_index, single_view=False):
-        """Update the counter labels"""
         left = self.data_processor.left_counts[arena_index]
         right = self.data_processor.right_counts[arena_index]
         total = left + right
@@ -464,12 +522,14 @@ class StrobeDataViewer(QMainWindow):
             self.all_pref_labels[arena_index].setText(f"Pref: {pref:.2f}")
     
     def stop_data_collection(self):
-        """Stop data collection"""
         self.is_running = False
         print("Stopped data collection")
         
         if hasattr(self, 'timer') and self.timer.isActive():
             self.timer.stop()
+            
+        if hasattr(self, 'error_check_timer') and self.error_check_timer.isActive():
+            self.error_check_timer.stop()
         
         if self.data_thread:
             self.data_thread.stop()
@@ -493,28 +553,21 @@ class StrobeDataViewer(QMainWindow):
         self.port_combo.setEnabled(True)
         self.scan_button.setEnabled(True)
         self.save_location_button.setEnabled(True)
+        # Restart button remains enabled
         
         self.status_label.setText("Data collection stopped.")
     
-    def reset_baseline(self):
-        """Reset the baseline calibration"""
-        self.data_processor.reset_baseline(
-            self.current_arena_index, 
-            all_arenas=self.show_all_arenas
-        )
-    
     def reset_view(self):
-        """Reset plot scales"""
         if self.show_all_arenas:
-            for plot in self.all_plot_widgets:
-                plot.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
-                plot.autoRange()
+            for i, plot in enumerate(self.all_plot_widgets):
+                if i < self.visible_arena_count:
+                    plot.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+                    plot.autoRange()
         else:
             self.single_plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
             self.single_plot_widget.autoRange()
     
     def change_arena(self, index):
-        """Switch to different arena"""
         self.current_arena_index = index
         
         if not self.show_all_arenas:
@@ -529,7 +582,6 @@ class StrobeDataViewer(QMainWindow):
             self.update_arena_labels(index, single_view=True)
     
     def toggle_show_all_arenas(self, checked):
-        """Switch between single/multi views"""
         self.show_all_arenas = checked
         if self.show_all_arenas:
             self.plot_stack.setCurrentWidget(self.all_plots_widget)
@@ -548,13 +600,11 @@ class StrobeDataViewer(QMainWindow):
             self.update_arena_labels(idx, single_view=True)
     
     def toggle_debug_mode(self, checked):
-        """Turn on/off simulation mode"""
         self.debug_mode = checked
         if self.is_running:
             self.stop_data_collection()
             self.start_data_collection()
     
     def closeEvent(self, event):
-        """Handle window close"""
         self.stop_data_collection()
         event.accept()

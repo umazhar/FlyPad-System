@@ -5,33 +5,43 @@ STROBE - Data processing module
 """
 
 from constants import *
+import numpy as np
 
-class DataProcessor:
-    """Processes sensor data and detects sips"""
-    
+class DataProcessor:    
     def __init__(self):
         self.reset()
     
     def reset(self):
-        """Reset all data structures"""
-        # Data arrays
         self.data_left = [[] for _ in range(NUM_ARENAS)]
         self.data_right = [[] for _ in range(NUM_ARENAS)]
-        self.baseline_offsets_left = [0 for _ in range(NUM_ARENAS)]
-        self.baseline_offsets_right = [0 for _ in range(NUM_ARENAS)]
-        
-        # Sip counters
         self.left_counts = [0 for _ in range(NUM_ARENAS)]
         self.right_counts = [0 for _ in range(NUM_ARENAS)]
         
-        # State bits (0: not above, 1: left above, 2: right above, 3: both above)
-        self.was_above_threshold = [0 for _ in range(NUM_ARENAS)]
+        # Previous values for change detection
+        self.prev_left_values = [0 for _ in range(NUM_ARENAS)]
+        self.prev_right_values = [0 for _ in range(NUM_ARENAS)]
+        
+        # Sip state tracking (0: no sip in progress, 1: sip in progress, 2: in cooldown)
+        self.left_sensor_state = [0 for _ in range(NUM_ARENAS)]
+        self.right_sensor_state = [0 for _ in range(NUM_ARENAS)]
+        
+        # Sip timing tracking
+        self.left_sensor_sip_start_time = [0 for _ in range(NUM_ARENAS)]
+        self.right_sensor_sip_start_time = [0 for _ in range(NUM_ARENAS)]
+        
+        # Cooldown tracking
+        self.left_sensor_cooldown_until = [0 for _ in range(NUM_ARENAS)]
+        self.right_sensor_cooldown_until = [0 for _ in range(NUM_ARENAS)]
         
         # Data counter
         self.historic_val_counter = 0
+        
+        # Configuration for sip detection
+        self.change_threshold = MIN_THRESHOLD      # Minimum change to trigger a potential sip
+        self.min_sip_time = MIN_SIP_TIME           # Minimum readings that constitute a sip (at 10Hz, 5 = 500ms)
+        self.cooldown_time = COOLDOWN_TIME        # Readings to wait before allowing another sip (at 10Hz, 150 = 15s)
     
     def has_data(self):
-        """Check if there's any data yet"""
         for data in self.data_left:
             if data:
                 return True
@@ -41,7 +51,6 @@ class DataProcessor:
         return False
     
     def process_data(self, left_values, right_values):
-        """Process new sensor readings"""
         self.historic_val_counter += 1
         
         # Handle each arena
@@ -49,72 +58,107 @@ class DataProcessor:
             self._process_arena_data(i, left_values[i], right_values[i])
     
     def _process_arena_data(self, arena_index, left_val, right_val):
-        """Process single arena data"""
         # Process left sensor
-        calibrated_left = left_val - self.baseline_offsets_left[arena_index]
-        self.data_left[arena_index].append(calibrated_left)
+        self.data_left[arena_index].append(left_val)
         if len(self.data_left[arena_index]) > NUM_HISTORIC_VALUES:
             self.data_left[arena_index].pop(0)
         
         # Process right sensor
-        calibrated_right = right_val - self.baseline_offsets_right[arena_index]
-        self.data_right[arena_index].append(calibrated_right)
+        self.data_right[arena_index].append(right_val)
         if len(self.data_right[arena_index]) > NUM_HISTORIC_VALUES:
             self.data_right[arena_index].pop(0)
+                
+        self._process_left_sensor_for_right_sips(arena_index, left_val)
         
-        # Check for sips
-        self._detect_sips(arena_index, left_val, right_val)
+        self._process_right_sensor_for_left_sips(arena_index, right_val)
+        self.prev_left_values[arena_index] = left_val
+        self.prev_right_values[arena_index] = right_val
     
-    def _detect_sips(self, arena_index, left_val, right_val):
-        """Detect sips for an arena"""
-        # Get current state of each sensor
-        left_was_above = self.was_above_threshold[arena_index] & 1
-        right_was_above = (self.was_above_threshold[arena_index] & 2) >> 1
+    def _process_left_sensor_for_right_sips(self, arena_index, left_val):
+        # Calculate change from previous value
+        change = abs(left_val - self.prev_left_values[arena_index])
+        current_time = self.historic_val_counter
         
-        # Debug print if values are high
-        if left_val > LEFT_SIP_THRESHOLD or right_val > RIGHT_SIP_THRESHOLD:
-            print(f"Arena {arena_index+1}: Left={left_val} (was_above={left_was_above}), Right={right_val} (was_above={right_was_above})")
+        # Check if we're in cooldown, if not in cooldown, reset state
+        if self.left_sensor_state[arena_index] == 2:
+            if current_time > self.left_sensor_cooldown_until[arena_index]:
+                self.left_sensor_state[arena_index] = 0
+                print(f"Arena {arena_index+1}: Right sensor cooldown ended")
+            else:
+                # Still in cooldown, ignore this reading
+                return
         
-        # Right sensor triggers left counter
-        left_above_threshold = (right_val > LEFT_SIP_THRESHOLD)
-        if left_above_threshold and not left_was_above:
-            self.left_counts[arena_index] += 1
-            print(f"LEFT SIP DETECTED - Arena {arena_index+1}, Value: {right_val}")
-            self.was_above_threshold[arena_index] |= 1
-        elif not left_above_threshold:
-            self.was_above_threshold[arena_index] &= ~1
+        if change > self.change_threshold:
+            print(f"Arena {arena_index+1}: Right sensor change={change}")
         
-        # Left sensor triggers right counter
-        right_above_threshold = (left_val > RIGHT_SIP_THRESHOLD)
-        if right_above_threshold and not right_was_above:
-            self.right_counts[arena_index] += 1
-            print(f"RIGHT SIP DETECTED - Arena {arena_index+1}, Value: {left_val}")
-            self.was_above_threshold[arena_index] |= 2
-        elif not right_above_threshold:
-            self.was_above_threshold[arena_index] &= ~2
+        # State 0: No sip in progress - check for start of sip
+        if self.left_sensor_state[arena_index] == 0:
+            if change > self.change_threshold:
+                # Start tracking a potential sip
+                self.left_sensor_state[arena_index] = 1
+                self.left_sensor_sip_start_time[arena_index] = current_time
+                print(f"Potential RIGHT sip starting - Arena {arena_index+1}, Change: {change}")
+        
+        # State 1: Sip in progress - check for completion or timeout
+        elif self.left_sensor_state[arena_index] == 1:
+            sip_duration = current_time - self.left_sensor_sip_start_time[arena_index]
+            
+            if change > self.change_threshold and sip_duration >= self.min_sip_time:
+                # Count the sip
+                self.right_counts[arena_index] += 1
+                print(f"RIGHT SIP DETECTED - Arena {arena_index+1}, Duration: {sip_duration} samples")
+                
+                # Enter cooldown state
+                self.left_sensor_state[arena_index] = 2
+                self.left_sensor_cooldown_until[arena_index] = current_time + self.cooldown_time
+                print(f"Arena {arena_index+1}: Right sensor entering cooldown for {self.cooldown_time} samples")
+            
+            # Check for timeout (sip took too long to complete)
+            elif sip_duration > 20:  # Timeout for sip in progress
+                print(f"Arena {arena_index+1}: Right sip timeout - resetting")
+                self.left_sensor_state[arena_index] = 0
     
-    def reset_baseline(self, current_arena_index, all_arenas=False):
-        """Reset the baseline calibration"""
-        if all_arenas:
-            for i in range(NUM_ARENAS):
-                self._reset_arena_baseline(i)
-        else:
-            self._reset_arena_baseline(current_arena_index)
-    
-    def _reset_arena_baseline(self, arena_index):
-        """Reset baseline for one arena"""
-        # Reset left sensor baseline
-        if self.data_left[arena_index]:
-            current_value_left = self.data_left[arena_index][-1] + self.baseline_offsets_left[arena_index]
-        else:
-            current_value_left = 0
-        self.baseline_offsets_left[arena_index] = current_value_left
+    def _process_right_sensor_for_left_sips(self, arena_index, right_val):
+        # Calculate change from previous value
+        change = abs(right_val - self.prev_right_values[arena_index])
+        current_time = self.historic_val_counter
         
-        # Reset right sensor baseline
-        if self.data_right[arena_index]:
-            current_value_right = self.data_right[arena_index][-1] + self.baseline_offsets_right[arena_index]
-        else:
-            current_value_right = 0
-        self.baseline_offsets_right[arena_index] = current_value_right
+        if self.right_sensor_state[arena_index] == 2:
+            if current_time > self.right_sensor_cooldown_until[arena_index]:
+                self.right_sensor_state[arena_index] = 0
+                print(f"Arena {arena_index+1}: Left sensor cooldown ended")
+            else:
+                # Still in cooldown, ignore this reading
+                return
         
-        print(f"Baseline reset: Arena {arena_index+1} - Left: {current_value_left}, Right: {current_value_right}")
+        # Debug print for large changes
+        if change > self.change_threshold:
+            print(f"Arena {arena_index+1}: Left sensor change={change}")
+        
+        # State 0: No sip in progress - check for start of sip
+        if self.right_sensor_state[arena_index] == 0:
+            if change > self.change_threshold:
+                # Start tracking a potential sip
+                self.right_sensor_state[arena_index] = 1
+                self.right_sensor_sip_start_time[arena_index] = current_time
+                print(f"Potential LEFT sip starting - Arena {arena_index+1}, Change: {change}")
+        
+        # State 1: Sip in progress - check for completion or timeout
+        elif self.right_sensor_state[arena_index] == 1:
+            sip_duration = current_time - self.right_sensor_sip_start_time[arena_index]
+            
+            # Check if this is the end of a valid sip
+            if change > self.change_threshold and sip_duration >= self.min_sip_time:
+                # Count the sip
+                self.left_counts[arena_index] += 1
+                print(f"LEFT SIP DETECTED - Arena {arena_index+1}, Duration: {sip_duration} samples")
+                
+                # Enter cooldown state
+                self.right_sensor_state[arena_index] = 2
+                self.right_sensor_cooldown_until[arena_index] = current_time + self.cooldown_time
+                print(f"Arena {arena_index+1}: Left sensor entering cooldown for {self.cooldown_time} samples")
+            
+            # Check for timeout (sip took too long to complete)
+            elif sip_duration > 20:  # Timeout for sip in progress
+                print(f"Arena {arena_index+1}: Left sip timeout - resetting")
+                self.right_sensor_state[arena_index] = 0

@@ -23,6 +23,15 @@ FTDI_WRITE_TIMEOUT = 1000
 LEFT_SIP_THRESHOLD = 1300
 RIGHT_SIP_THRESHOLD = 1300
 
+"""
+Sip Detection Constants
+
+at 10z, 1 = 100 ms 
+"""
+MIN_THRESHOLD = 30 # Y change to trigger a potential sip
+MIN_SIP_TIME = 5
+COOLDOWN_TIME = 10
+
 
 '''
 Arena Descriptions
