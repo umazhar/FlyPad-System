@@ -83,11 +83,11 @@ class StrobeDataViewer(QMainWindow):
         self.show_all_button.toggled.connect(self.toggle_show_all_arenas)
         top_layout.addWidget(self.show_all_button)
         
-        # Debug toggle
-        self.debug_button = QPushButton("Debug Mode")
-        self.debug_button.setCheckable(True)
-        self.debug_button.toggled.connect(self.toggle_debug_mode)
-        top_layout.addWidget(self.debug_button)
+        # # Debug toggle
+        # self.debug_button = QPushButton("Debug Mode")
+        # self.debug_button.setCheckable(True)
+        # self.debug_button.toggled.connect(self.toggle_debug_mode)
+        # top_layout.addWidget(self.debug_button)
         
         # Arena count selector
         top_layout.addWidget(QLabel("Number of Arenas:"))
