@@ -1,9 +1,5 @@
-#!/usr/bin/env python3
-
-"""
-STROBE - Data processing module
-"""
-
+import datetime
+import time
 from constants import *
 import numpy as np
 
@@ -40,7 +36,7 @@ class DataProcessor:
         self.change_threshold = MIN_THRESHOLD      # Minimum change to trigger a potential sip
         self.min_sip_time = MIN_SIP_TIME           # Minimum readings that constitute a sip (at 10Hz, 5 = 500ms)
         self.cooldown_time = COOLDOWN_TIME        # Readings to wait before allowing another sip (at 10Hz, 150 = 15s)
-    
+            
     def has_data(self):
         for data in self.data_left:
             if data:
@@ -52,8 +48,6 @@ class DataProcessor:
     
     def process_data(self, left_values, right_values):
         self.historic_val_counter += 1
-        
-        # Handle each arena
         for i in range(min(NUM_ARENAS, len(left_values), len(right_values))):
             self._process_arena_data(i, left_values[i], right_values[i])
     
@@ -68,13 +62,13 @@ class DataProcessor:
         if len(self.data_right[arena_index]) > NUM_HISTORIC_VALUES:
             self.data_right[arena_index].pop(0)
                 
-        self._process_left_sensor_for_right_sips(arena_index, left_val)
+        self._process_left_sensor_detection(arena_index, left_val)
         
-        self._process_right_sensor_for_left_sips(arena_index, right_val)
+        self._process_right_sensor_detection(arena_index, right_val)
         self.prev_left_values[arena_index] = left_val
         self.prev_right_values[arena_index] = right_val
     
-    def _process_left_sensor_for_right_sips(self, arena_index, left_val):
+    def _process_left_sensor_detection(self, arena_index, left_val):
         # Calculate change from previous value
         change = abs(left_val - self.prev_left_values[arena_index])
         current_time = self.historic_val_counter
@@ -118,7 +112,7 @@ class DataProcessor:
                 print(f"Arena {arena_index+1}: Right sip timeout - resetting")
                 self.left_sensor_state[arena_index] = 0
     
-    def _process_right_sensor_for_left_sips(self, arena_index, right_val):
+    def _process_right_sensor_detection(self, arena_index, right_val):
         # Calculate change from previous value
         change = abs(right_val - self.prev_right_values[arena_index])
         current_time = self.historic_val_counter
