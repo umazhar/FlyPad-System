@@ -141,6 +141,20 @@ class StrobeDataViewer(QMainWindow):
         # Status bar
         self.status_label = QLabel("Ready. Select a port and click Start.")
         main_layout.addWidget(self.status_label)
+
+    def highlight_sip_label(self, arena_index, side):
+        if self.show_all_arenas:
+            label = self.all_sip_left_labels[arena_index] if side == 'left' else self.all_sip_right_labels[arena_index]
+        elif self.current_arena_index == arena_index:
+            label = self.single_sip_left_label if side == 'left' else self.single_sip_right_label
+        else:
+            return
+        
+        # Highlight with Greeen text
+        label.setStyleSheet("color: red; font-weight: bold;")
+        
+        QTimer.singleShot(1000, lambda: label.setStyleSheet(""))
+
     
     def setup_single_arena_view(self):
         self.single_plot_container = QWidget()
@@ -357,6 +371,7 @@ class StrobeDataViewer(QMainWindow):
             
             # Reset processor
             self.data_processor.reset()
+            self.data_processor.register_sip_callback(self.highlight_sip_label)            
             self.is_running = True
             
             if self.debug_mode:
@@ -393,8 +408,8 @@ class StrobeDataViewer(QMainWindow):
                 self.status_label.setText(f"Connected to {port_name}. Saving to {logs_dir}")
             
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error: {str(e)}")
-    
+            QMessageBox.critical(self, "Error", f"Error: {str(e)}")    
+
     def check_connection_health(self):
         if not self.is_running or self.debug_mode:
             return

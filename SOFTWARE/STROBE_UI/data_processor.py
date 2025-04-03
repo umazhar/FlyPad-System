@@ -6,6 +6,7 @@ import numpy as np
 class DataProcessor:    
     def __init__(self):
         self.reset()
+        self.sip_callbacks = [] 
     
     def reset(self):
         self.data_left = [[] for _ in range(NUM_ARENAS)]
@@ -36,6 +37,12 @@ class DataProcessor:
         self.change_threshold = MIN_THRESHOLD      # Minimum change to trigger a potential sip
         self.min_sip_time = MIN_SIP_TIME           # Minimum readings that constitute a sip (at 10Hz, 5 = 500ms)
         self.cooldown_time = COOLDOWN_TIME        # Readings to wait before allowing another sip (at 10Hz, 150 = 15s)
+        
+        if not hasattr(self, 'sip_callbacks'):
+            self.sip_callbacks = []
+    
+    def register_sip_callback(self, callback):
+        self.sip_callbacks.append(callback)
             
     def has_data(self):
         for data in self.data_left:
@@ -102,6 +109,9 @@ class DataProcessor:
                 self.right_counts[arena_index] += 1
                 print(f"RIGHT SIP DETECTED - Arena {arena_index+1}, Duration: {sip_duration} samples")
                 
+                for callback in self.sip_callbacks:
+                    callback(arena_index, 'right')
+                
                 # Enter cooldown state
                 self.left_sensor_state[arena_index] = 2
                 self.left_sensor_cooldown_until[arena_index] = current_time + self.cooldown_time
@@ -146,6 +156,9 @@ class DataProcessor:
                 # Count the sip
                 self.left_counts[arena_index] += 1
                 print(f"LEFT SIP DETECTED - Arena {arena_index+1}, Duration: {sip_duration} samples")
+                
+                for callback in self.sip_callbacks:
+                    callback(arena_index, 'left')
                 
                 # Enter cooldown state
                 self.right_sensor_state[arena_index] = 2
