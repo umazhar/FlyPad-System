@@ -18,13 +18,31 @@ git clone https://github.com/umazhar/STROBE.git
 cd /SOFTWARE/STROBE_UI
 ```
 
-2. Create and activate a virtual environment:
+**For Linux/Mac (Terminal):**
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+**For Windows (Command Prompt):**
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+```
+
+**For Windows (PowerShell):**
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+1. Create and activate a virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install required dependencies:
+1. Install required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
