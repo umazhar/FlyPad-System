@@ -493,28 +493,24 @@ class StrobeDataViewer(QMainWindow):
             self.stop_data_collection()
         
         self.data_processor.reset()
+        
         self.data_logger.close_files()
-
-        # reset auto view
+        
         self.prev_left_counts = [0] * NUM_ARENAS
         self.prev_right_counts = [0] * NUM_ARENAS
         
         self.auto_reset_done = False
-        
         custom_path = getattr(self, 'custom_save_path', None)
-        logs_dir = self.data_logger.setup_files(custom_path)
         
         self.reset_view()
         
-        # Update status
         if custom_path:
-            self.status_label.setText(f"Test restarted. Saving to custom location: {custom_path}")
+            self.status_label.setText(f"Test restarted. Will save to custom location: {custom_path}")
         else:
-            self.status_label.setText(f"Test restarted. Saving to {logs_dir}")
-            
+            self.status_label.setText("Test restarted. New log file will be created when data collection starts.")
         if was_running:
             self.start_data_collection()
-            
+
     def update_plots(self):
         got_data = False
         
