@@ -494,6 +494,12 @@ class StrobeDataViewer(QMainWindow):
         
         self.data_processor.reset()
         self.data_logger.close_files()
+
+        # reset auto view
+        self.prev_left_counts = [0] * NUM_ARENAS
+        self.prev_right_counts = [0] * NUM_ARENAS
+        
+        self.auto_reset_done = False
         
         custom_path = getattr(self, 'custom_save_path', None)
         logs_dir = self.data_logger.setup_files(custom_path)
