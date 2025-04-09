@@ -58,7 +58,7 @@ class DataLogger:
                 left = left_counts[i]
                 right = right_counts[i]
                 total = left + right
-                pref = (left - right)/total if total > 0 else 0
+                pref = (right - left)/total if total > 0 else 0
                 row.append(str(left))
                 row.append(str(right))
                 row.append(str(total))
