@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import queue
 import time
 import numpy as np
@@ -9,7 +7,7 @@ from PyQt5.QtWidgets import (
     QFrame, QStackedWidget, QLineEdit
 )
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QIntValidator
+from PyQt5.QtGui import QIntValidator, QPalette, QColor
 import pyqtgraph as pg
 
 from constants import *
@@ -33,6 +31,12 @@ class StrobeDataViewer(QMainWindow):
         
         self.show_all_arenas = True
         self.init_ui()
+
+        self.prev_left_counts = [0] * NUM_ARENAS
+        self.prev_right_counts = [0] * NUM_ARENAS
+        
+        self.start_time = 0
+        self.auto_reset_done = False
         
         # initial states
         self.show_all_button.setChecked(True)
@@ -165,12 +169,26 @@ class StrobeDataViewer(QMainWindow):
         self.single_labels_layout = QHBoxLayout()
         self.single_labels_layout.setSpacing(15)
         
+        left_frame = QFrame()
+        left_frame.setFrameShape(QFrame.StyledPanel)
+        left_frame.setMinimumWidth(70)
+        left_layout = QHBoxLayout(left_frame)
+        left_layout.setContentsMargins(5, 2, 5, 2)
         self.single_sip_left_label = QLabel("Left: 0")
+        left_layout.addWidget(self.single_sip_left_label)
+        
         line1 = QFrame()
         line1.setFrameShape(QFrame.VLine)
         line1.setFrameShadow(QFrame.Sunken)
         
+        right_frame = QFrame()
+        right_frame.setFrameShape(QFrame.StyledPanel)
+        right_frame.setMinimumWidth(70)
+        right_layout = QHBoxLayout(right_frame)
+        right_layout.setContentsMargins(5, 2, 5, 2)
         self.single_sip_right_label = QLabel("Right: 0")
+        right_layout.addWidget(self.single_sip_right_label)
+        
         line2 = QFrame()
         line2.setFrameShape(QFrame.VLine)
         line2.setFrameShadow(QFrame.Sunken)
@@ -182,14 +200,18 @@ class StrobeDataViewer(QMainWindow):
         
         self.single_pref_label = QLabel("Pref: 0.00")
         
-        self.single_labels_layout.addWidget(self.single_sip_left_label)
+        self.single_labels_layout.addWidget(left_frame)
         self.single_labels_layout.addWidget(line1)
-        self.single_labels_layout.addWidget(self.single_sip_right_label)
+        self.single_labels_layout.addWidget(right_frame)
         self.single_labels_layout.addWidget(line2)
         self.single_labels_layout.addWidget(self.single_sip_total_label)
         self.single_labels_layout.addWidget(line3)
         self.single_labels_layout.addWidget(self.single_pref_label)
         self.single_labels_layout.addStretch(1)
+        
+        self.single_left_frame = left_frame
+        self.single_right_frame = right_frame
+        
         single_plot_layout.addLayout(self.single_labels_layout)
         self.plot_stack.addWidget(self.single_plot_container)
     
@@ -209,6 +231,9 @@ class StrobeDataViewer(QMainWindow):
         self.all_sip_right_labels = []
         self.all_sip_total_labels = []
         self.all_pref_labels = []
+        
+        self.all_left_frames = []
+        self.all_right_frames = []
         
         # Store arena containers for recreating grid
         self.arena_containers = []
@@ -241,12 +266,28 @@ class StrobeDataViewer(QMainWindow):
             label_row = QHBoxLayout()
             label_row.setSpacing(10)
             
+            left_frame = QFrame()
+            left_frame.setFrameShape(QFrame.StyledPanel)
+            left_frame.setMinimumWidth(60)
+            left_layout = QHBoxLayout(left_frame)
+            left_layout.setContentsMargins(5, 2, 5, 2)
+            left_layout.setSpacing(0)
             sip_left_label = QLabel("Left: 0")
+            left_layout.addWidget(sip_left_label)
+            
             lineA = QFrame()
             lineA.setFrameShape(QFrame.VLine)
             lineA.setFrameShadow(QFrame.Sunken)
-    
+            
+            right_frame = QFrame()
+            right_frame.setFrameShape(QFrame.StyledPanel)
+            right_frame.setMinimumWidth(60)
+            right_layout = QHBoxLayout(right_frame)
+            right_layout.setContentsMargins(5, 2, 5, 2)
+            right_layout.setSpacing(0)
             sip_right_label = QLabel("Right: 0")
+            right_layout.addWidget(sip_right_label)
+            
             lineB = QFrame()
             lineB.setFrameShape(QFrame.VLine)
             lineB.setFrameShadow(QFrame.Sunken)
@@ -258,9 +299,9 @@ class StrobeDataViewer(QMainWindow):
             
             pref_label = QLabel("Pref: 0.00")
             
-            label_row.addWidget(sip_left_label)
+            label_row.addWidget(left_frame)
             label_row.addWidget(lineA)
-            label_row.addWidget(sip_right_label)
+            label_row.addWidget(right_frame)
             label_row.addWidget(lineB)
             label_row.addWidget(sip_total_label)
             label_row.addWidget(lineC)
@@ -283,6 +324,19 @@ class StrobeDataViewer(QMainWindow):
             self.all_sip_right_labels.append(sip_right_label)
             self.all_sip_total_labels.append(sip_total_label)
             self.all_pref_labels.append(pref_label)
+            self.all_left_frames.append(left_frame)
+            self.all_right_frames.append(right_frame)
+    
+    def highlight_sip(self, frame, highlight=True):
+        if highlight:
+            frame.setStyleSheet("QFrame { background-color: #39C5BB; border-radius: 3px; }")
+            # Create a timer to turn off the highlight
+            timer = QTimer(self)
+            timer.setSingleShot(True)
+            timer.timeout.connect(lambda: self.highlight_sip(frame, False))
+            timer.start(500)  # 500ms highlight duration
+        else:
+            frame.setStyleSheet("")
     
     def scan_serial_ports(self):
         self.port_combo.clear()
@@ -359,6 +413,12 @@ class StrobeDataViewer(QMainWindow):
             self.data_processor.reset()
             self.is_running = True
             
+            self.prev_left_counts = [0] * NUM_ARENAS
+            self.prev_right_counts = [0] * NUM_ARENAS
+            
+            self.start_time = time.time()
+            self.auto_reset_done = False
+            
             if self.debug_mode:
                 self.data_thread = SimulatedDataReader(self.data_queue)
             else:
@@ -396,13 +456,20 @@ class StrobeDataViewer(QMainWindow):
             QMessageBox.critical(self, "Error", f"Error: {str(e)}")
     
     def check_connection_health(self):
-        if not self.is_running or self.debug_mode:
+        if not self.is_running:
             return
             
-        # Check if weve received data recently (more than 5 seconds)
+        # Check if we've received data recently (more than 5 seconds)
         if hasattr(self, 'last_data_time') and time.time() - self.last_data_time > 5:
             # Update status to show warning
             self.status_label.setText("Warning: No data received in the last 5 seconds. Check connection.")
+            
+        # Auto reset view after 1 second
+        current_time = time.time()
+        if not self.auto_reset_done and (current_time - self.start_time >= 1.0):
+            print("Auto reset view after 1 second")
+            self.reset_view()
+            self.auto_reset_done = True
     
     def restart_test(self):
         # Show warning dialog first
@@ -431,7 +498,6 @@ class StrobeDataViewer(QMainWindow):
         custom_path = getattr(self, 'custom_save_path', None)
         logs_dir = self.data_logger.setup_files(custom_path)
         
-        # Reset UI to view refreshed stte
         self.reset_view()
         
         # Update status
@@ -510,16 +576,36 @@ class StrobeDataViewer(QMainWindow):
         total = left + right
         pref = (left - right)/total if total > 0 else 0
         
+        # Check for new sips
+        left_sip_detected = left > self.prev_left_counts[arena_index]
+        right_sip_detected = right > self.prev_right_counts[arena_index]
+        
+        # Update previous counts
+        self.prev_left_counts[arena_index] = left
+        self.prev_right_counts[arena_index] = right
+        
         if single_view:
             self.single_sip_left_label.setText(f"Left: {left}")
             self.single_sip_right_label.setText(f"Right: {right}")
             self.single_sip_total_label.setText(f"Total: {total}")
             self.single_pref_label.setText(f"Pref: {pref:.2f}")
+            
+            if left_sip_detected:
+                self.highlight_sip(self.single_left_frame, True)
+                
+            if right_sip_detected:
+                self.highlight_sip(self.single_right_frame, True)
         else:
             self.all_sip_left_labels[arena_index].setText(f"Left: {left}")
             self.all_sip_right_labels[arena_index].setText(f"Right: {right}")
             self.all_sip_total_labels[arena_index].setText(f"Total: {total}")
             self.all_pref_labels[arena_index].setText(f"Pref: {pref:.2f}")
+            
+            if left_sip_detected:
+                self.highlight_sip(self.all_left_frames[arena_index], True)
+                
+            if right_sip_detected:
+                self.highlight_sip(self.all_right_frames[arena_index], True)
     
     def stop_data_collection(self):
         self.is_running = False
@@ -566,6 +652,8 @@ class StrobeDataViewer(QMainWindow):
         else:
             self.single_plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
             self.single_plot_widget.autoRange()
+        
+        print("View reset applied")
     
     def change_arena(self, index):
         self.current_arena_index = index
