@@ -587,7 +587,7 @@ class StrobeDataViewer(QMainWindow):
         left = self.data_processor.left_counts[arena_index]
         right = self.data_processor.right_counts[arena_index]
         total = left + right
-        pref = (left - right)/total if total > 0 else 0
+        pref = (right - left)/total if total > 0 else 0
         
         # Check for new sips
         left_sip_detected = left > self.prev_left_counts[arena_index]
