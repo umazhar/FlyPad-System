@@ -254,8 +254,8 @@ class StrobeDataViewer(QMainWindow):
             arena_layout.addWidget(plot)
             
 
-            left_curve = pg.PlotDataItem([], pen=pg.mkPen(color='r', width=2), name="Left Sensor") #red
-            right_curve = pg.PlotDataItem([], pen=pg.mkPen(color='#39C5BB', width=2), name="Right Sensor")  # Light blue color
+            left_curve = pg.PlotDataItem([], pen=pg.mkPen(color='#39C5BB', width=2), name="Left Sensor") #blue
+            right_curve = pg.PlotDataItem([], pen=pg.mkPen(color='r', width=2), name="Right Sensor")  # red
             plot.addItem(left_curve)
             plot.addItem(right_curve)
             
@@ -272,7 +272,8 @@ class StrobeDataViewer(QMainWindow):
             left_layout = QHBoxLayout(left_frame)
             left_layout.setContentsMargins(5, 2, 5, 2)
             left_layout.setSpacing(0)
-            sip_left_label = QLabel("Left: 0")
+            # sip_left_label = QLabel("Left: 0")
+            sip_left_label = QLabel("Blue: 0")
             left_layout.addWidget(sip_left_label)
             
             lineA = QFrame()
@@ -285,7 +286,8 @@ class StrobeDataViewer(QMainWindow):
             right_layout = QHBoxLayout(right_frame)
             right_layout.setContentsMargins(5, 2, 5, 2)
             right_layout.setSpacing(0)
-            sip_right_label = QLabel("Right: 0")
+            sip_right_label = QLabel("Red: 0")
+            # sip_right_label = QLabel("Right: 0")
             right_layout.addWidget(sip_right_label)
             
             lineB = QFrame()
@@ -587,8 +589,8 @@ class StrobeDataViewer(QMainWindow):
         self.prev_right_counts[arena_index] = right
         
         if single_view:
-            self.single_sip_left_label.setText(f"Left: {left}")
-            self.single_sip_right_label.setText(f"Right: {right}")
+            self.single_sip_left_label.setText(f"Blue: {left}")
+            self.single_sip_right_label.setText(f"Red: {right}")
             self.single_sip_total_label.setText(f"Total: {total}")
             self.single_pref_label.setText(f"Pref: {pref:.2f}")
             
@@ -598,8 +600,8 @@ class StrobeDataViewer(QMainWindow):
             if right_sip_detected:
                 self.highlight_sip(self.single_right_frame, True)
         else:
-            self.all_sip_left_labels[arena_index].setText(f"Left: {left}")
-            self.all_sip_right_labels[arena_index].setText(f"Right: {right}")
+            self.all_sip_left_labels[arena_index].setText(f"Blue: {left}")
+            self.all_sip_right_labels[arena_index].setText(f"Red: {right}")
             self.all_sip_total_labels[arena_index].setText(f"Total: {total}")
             self.all_pref_labels[arena_index].setText(f"Pref: {pref:.2f}")
             
