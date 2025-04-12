@@ -18,7 +18,7 @@ from data_processor import DataProcessor
 class StrobeDataViewer(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("STROBE: Sip-TRiggered Optogenetic Behavior Enclosure")
+        self.setWindowTitle("FlyPadUI: Fly Feeding and Activity Detector")
         self.setGeometry(100, 100, 1280, 800)
         self.data_queue = queue.Queue()
         self.data_processor = DataProcessor()
