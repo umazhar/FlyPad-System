@@ -145,7 +145,7 @@ class FTDIConnection:
             device.resetDevice()
             device.setBitMode(0, 0)  # Reset to normal UART mode
             device.setTimeouts(FTDI_READ_TIMEOUT, FTDI_WRITE_TIMEOUT)
-            device.setLatencyTimer(16)
+            device.setLatencyTimer(D2XX_LATENCY) 
             device.setBaudRate(9600)
             device.setDataCharacteristics(8, 0, 0)  # 8 bits, no parity, 1 stop bit
             
