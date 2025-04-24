@@ -345,12 +345,12 @@ class StrobeDataViewer(QMainWindow):
         ftdi_ports, all_ports = FTDIConnection.scan_ports()
         if ftdi_ports:
             for port in ftdi_ports:
-                self.port_combo.addItem(port["display"], port["device"])
+                self.port_combo.addItem(port["display"], port)
             self.status_label.setText(f"Found {len(ftdi_ports)} FTDI device(s).")
         else:
             if all_ports:
                 for port in all_ports:
-                    self.port_combo.addItem(port["display"], port["device"])
+                    self.port_combo.addItem(port["display"], port)
                 self.status_label.setText(f"No FTDI devices found. Showing all {len(all_ports)} port(s).")
             else:
                 self.port_combo.addItem("No ports found")
@@ -394,18 +394,26 @@ class StrobeDataViewer(QMainWindow):
     
     def start_data_collection(self):
         # Check port
-        port_name = self.port_combo.currentText()
-        if not port_name or "No ports found" in port_name:
+        port_item = self.port_combo.currentText()
+        if not port_item or "No ports found" in port_item:
             QMessageBox.warning(self, "Warning", "No valid port selected.")
             return
         
         try:
+            port_index = self.port_combo.currentIndex()
+            port_info = self.port_combo.itemData(port_index)
+            
             # Setup FTDI or sim
             if not self.debug_mode:
-                success, self.serial_port = FTDIConnection.setup_device(port_name)
+                if port_info is None:
+                    success, self.serial_port = FTDIConnection.setup_device(port_item)
+                else:
+                    success, self.serial_port = FTDIConnection.setup_device(port_info)
+                    
                 if not success:
                     QMessageBox.critical(self, "Error", "Failed to connect to FTDI device.")
                     return
+
             
             # Setup data files
             custom_path = getattr(self, 'custom_save_path', None)
