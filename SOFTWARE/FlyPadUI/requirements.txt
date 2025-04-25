@@ -4,3 +4,4 @@ pyqtgraph
 pyserial
 pandas
 matplotlib
+ftd2xx
