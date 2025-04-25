@@ -460,7 +460,7 @@ class StrobeDataViewer(QMainWindow):
             if self.debug_mode:
                 self.status_label.setText("Using SIMULATED data (for testing)")
             else:
-                self.status_label.setText(f"Connected to {port_name}. Saving to {logs_dir}")
+                self.status_label.setText(f"Connected to {port_item}. Saving to {logs_dir}")
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error: {str(e)}")
